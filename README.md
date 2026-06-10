@@ -16,8 +16,8 @@ necessary when:
 * **ovos-core runs on a server / NUC** while the desktop runs on a different device.
 * **The device OS changes** (e.g. X11 desktop → Wayland → headless kiosk): swap only
   the PHAL plugin without touching the skill.
-* **HiveMind multi-room setups**: the skill lives next to the core satellite; the PHAL
-  plugin runs on the device where apps should actually open.  Bus messages cross
+* **HiveMind multi-room setups**: the skill lives in ovos-core satellite; the PHAL
+  plugin runs on the satellite device where apps should actually open.  Bus messages cross
   HiveMind transparently.
 
 ```
@@ -100,33 +100,6 @@ pip install ovos-PHAL-plugin-app-launcher
 # optional: for window management
 sudo apt install wmctrl
 ```
-
----
-
-## How to test
-
-```bash
-pip install -e ".[test]"
-pytest test/ -v
-```
-
----
-
-## Blog draft: How any OVOS skill can follow the skill/PHAL split pattern
-
-> **Headline:** *Decoupling voice intent from OS action — the OVOS PHAL split pattern*
->
-> Any OVOS skill that calls `subprocess`, touches `/dev/`, writes to the filesystem, or
-> otherwise performs OS-specific actions can be split the same way this repo is:
->
-> 1. **Skill side** — keeps all NLU, dialog, and state.  Emits well-defined bus messages.
->    Lives beside ovos-core; works on any machine.
-> 2. **PHAL plugin side** — listens for those bus messages, performs the OS action, replies.
->    Runs on the device; can be replaced per OS without touching the skill.
->
-> The contract between the two is just a small event table (like the one above).
-> HiveMind forwards messagebus events transparently, so the two halves can run on
-> completely different machines.
 
 ---
 
