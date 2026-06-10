@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ovos-PHAL-plugin-app-launcher"
+dynamic = ["version"]
+description = "PHAL plugin: desktop application launcher OS actions over the OVOS messagebus"
+readme = "README.md"
+license = "Apache-2.0"
+authors = [{name = "JarbasAi", email = "jarbasai@mailfence.com"}]
+requires-python = ">=3.9"
+dependencies = [
+    "ovos-plugin-manager>=0.0.24,<3.0.0",
+    "ovos-utils>=0.1.0,<1.0.0",
+    "ovos-bus-client>=0.0.8,<3.0.0",
+    "psutil",
+]
+
+[project.urls]
+Homepage = "https://github.com/TigreGotico/ovos-PHAL-plugin-app-launcher"
+Repository = "https://github.com/TigreGotico/ovos-PHAL-plugin-app-launcher"
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-cov"]
+
+[project.entry-points."ovos.plugin.phal"]
+ovos-phal-plugin-app-launcher = "ovos_phal_plugin_app_launcher:AppLauncherPHALPlugin"
+
+[tool.setuptools.dynamic]
+version = {attr = "ovos_phal_plugin_app_launcher.version.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ovos_phal_plugin_app_launcher*"]
