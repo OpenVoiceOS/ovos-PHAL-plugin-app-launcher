@@ -24,7 +24,7 @@ Repository = "https://github.com/TigreGotico/ovos-PHAL-plugin-app-launcher"
 [project.optional-dependencies]
 test = ["pytest", "pytest-cov"]
 
-[project.entry-points."ovos.plugin.phal"]
+[project.entry-points."opm.phal"]
 ovos-phal-plugin-app-launcher = "ovos_phal_plugin_app_launcher:AppLauncherPHALPlugin"
 
 [tool.setuptools.dynamic]
