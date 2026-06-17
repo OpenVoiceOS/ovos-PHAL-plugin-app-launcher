@@ -1,11 +1,12 @@
 # Changelog
 
-## [0.0.0](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/tree/0.0.0) (2026-06-13)
+## [0.0.0](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/tree/0.0.0) (2026-06-17)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/compare/0.0.0...0.0.0)
 
 **Merged pull requests:**
 
+- chore: add missing shared CI workflows [\#5](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/pull/5) ([JarbasAl](https://github.com/JarbasAl))
 - docs: standardize NGI0 Commons Fund attribution [\#4](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/pull/4) ([JarbasAl](https://github.com/JarbasAl))
 - chore: Configure Renovate [\#2](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/pull/2) ([renovate[bot]](https://github.com/apps/renovate))
 
