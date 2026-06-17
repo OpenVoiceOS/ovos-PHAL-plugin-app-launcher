@@ -11,7 +11,7 @@ license = "Apache-2.0"
 authors = [{name = "JarbasAi", email = "jarbasai@mailfence.com"}]
 requires-python = ">=3.9"
 dependencies = [
-    "ovos-plugin-manager>=0.0.24,<3.0.0",
+    "ovos-plugin-manager>=2.1.0,<3.0.0",
     "ovos-utils>=0.1.0,<1.0.0",
     "ovos-bus-client>=0.0.8,<3.0.0",
     "psutil",
@@ -24,7 +24,7 @@ Repository = "https://github.com/TigreGotico/ovos-PHAL-plugin-app-launcher"
 [project.optional-dependencies]
 test = ["pytest", "pytest-cov"]
 
-[project.entry-points."ovos.plugin.phal"]
+[project.entry-points."opm.phal"]
 ovos-phal-plugin-app-launcher = "ovos_phal_plugin_app_launcher:AppLauncherPHALPlugin"
 
 [tool.setuptools.dynamic]
