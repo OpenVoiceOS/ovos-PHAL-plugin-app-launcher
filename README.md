@@ -1,23 +1,23 @@
 # ovos-PHAL-plugin-app-launcher
 
-PHAL plugin for [OpenVoiceOS](https://openvoiceos.com) that handles OS-level desktop
-application management on behalf of
-[ovos-skill-application-launcher](https://github.com/OpenVoiceOS/ovos-skill-application-launcher)
-(or any other bus client).
+This PHAL plugin for [OpenVoiceOS](https://openvoiceos.com) manages OS-level desktop
+applications for [ovos-skill-application-launcher](https://github.com/OpenVoiceOS/ovos-skill-application-launcher)
+or any other bus client. It scans `.desktop` files, launches and closes processes, and
+reports application state over the OVOS messagebus.
 
 ---
 
 ## Why a split architecture?
 
-In a standard single-box OVOS install the skill and the OS live on the same machine,
-so calling `subprocess.Popen` directly from the skill works.  The split becomes
-necessary when:
+In a single-box OVOS install, the skill and the OS run on the same machine, so
+`subprocess.Popen` calls from the skill work directly. A split between skill and
+plugin becomes necessary in these cases:
 
-* **ovos-core runs on a server / NUC** while the desktop runs on a different device.
-* **The device OS changes** (e.g. X11 desktop → Wayland → headless kiosk): swap only
-  the PHAL plugin without touching the skill.
-* **HiveMind multi-room setups**: the skill lives in ovos-core satellite; the PHAL
-  plugin runs on the satellite device where apps should actually open.  Bus messages cross
+* **ovos-core runs on a server or NUC** while the desktop runs on a different device.
+* **The device OS changes** (for example X11 desktop, Wayland, or a headless kiosk).
+  Only the PHAL plugin needs to change; the skill stays the same.
+* **HiveMind multi-room setups**: the skill runs on the ovos-core satellite, and the
+  PHAL plugin runs on the satellite device where apps must open. Bus messages cross
   HiveMind transparently.
 
 ```
@@ -41,7 +41,7 @@ necessary when:
 
 ## Bus event API
 
-All pairs use the standard `message.response()` convention so
+Each request and response pair uses the standard `message.response()` convention, so
 `bus.wait_for_response` works across HiveMind sessions.
 
 | Request event | Request payload | Response event | Response payload |
@@ -100,6 +100,13 @@ pip install ovos-PHAL-plugin-app-launcher
 # optional: for window management
 sudo apt install wmctrl
 ```
+
+---
+
+## Related projects
+
+* [ovos-skill-application-launcher](https://github.com/OpenVoiceOS/ovos-skill-application-launcher) -
+  the OVOS skill that sends launch, close, and status requests to this plugin.
 
 ---
 
