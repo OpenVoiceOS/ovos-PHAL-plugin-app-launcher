@@ -62,6 +62,7 @@ import subprocess
 from os import listdir
 from os.path import expanduser, isdir, join
 from shutil import which
+from time import sleep
 from typing import Dict, Generator, Iterable, List, Optional, Union
 
 import psutil
@@ -264,15 +265,20 @@ class AppLauncherPHALPlugin(PHALPlugin):
                 ]
             }
         """
-        # Rebuild applist on each list request so newly-installed apps appear.
-        self._applist = self._build_applist()
-        apps = []
-        seen_execs: set = set()
-        for name, cmd in self.applist.items():
-            if cmd in seen_execs:
-                continue
-            seen_execs.add(cmd)
-            apps.append({"name": name, "exec": cmd})
+        try:
+            # Rebuild applist on each list request so newly-installed apps appear.
+            self._applist = self._build_applist()
+            apps = []
+            seen_execs: set = set()
+            for name, cmd in self.applist.items():
+                if cmd in seen_execs:
+                    continue
+                seen_execs.add(cmd)
+                apps.append({"name": name, "exec": cmd})
+        except OSError as exc:
+            LOG.exception("[app-launcher] error building applist")
+            self.bus.emit(message.response({"error": str(exc)}))
+            return
         self.bus.emit(message.response({"apps": apps}))
 
     def handle_launch(self, message: Message) -> None:
@@ -283,20 +289,33 @@ class AppLauncherPHALPlugin(PHALPlugin):
         Response payload (success): ``{"name": "firefox", "success": true}``
         Response payload (error):   ``{"name": "firefox", "error": "..."}``
         """
-        name: str = message.data.get("name", "")
-        if not name:
-            self.bus.emit(message.response({"name": name, "error": "Missing 'name' field"}))
+        name = message.data.get("name", "")
+        if not isinstance(name, str) or not name.strip():
+            self.bus.emit(message.response({"name": name, "error": "invalid or missing name"}))
             return
 
-        cmd, score = match_one(name.title(), self.applist)
-        if score < self._thresh:
-            LOG.warning(f"[app-launcher] no app match for '{name}' (best score {score:.2f})")
-            self.bus.emit(message.response({"name": name, "error": f"No application matched '{name}'"}))
-            return
-
-        LOG.info(f"[app-launcher] launching '{name}' → '{cmd}' (score {score:.2f})")
+        cmd = None
         try:
-            subprocess.Popen(shlex.split(cmd), shell=self._cfg("shell", False))
+            cmd, score = match_one(name.title(), self.applist)
+            if score < self._thresh:
+                LOG.warning(f"[app-launcher] no app match for '{name}' (best score {score:.2f})")
+                self.bus.emit(message.response({"name": name, "error": f"No application matched '{name}'"}))
+                return
+
+            LOG.info(f"[app-launcher] launching '{name}' → '{cmd}' (score {score:.2f})")
+            proc = subprocess.Popen(shlex.split(cmd), shell=self._cfg("shell", False))
+            # A process that starts and immediately exits nonzero (e.g. a
+            # usage error) is not a successful launch even though Popen
+            # itself did not raise.
+            returncode = proc.poll()
+            if returncode is None:
+                sleep(0.3)
+                returncode = proc.poll()
+            if returncode is not None and returncode != 0:
+                LOG.warning(f"[app-launcher] '{cmd}' exited immediately with code {returncode}")
+                self.bus.emit(message.response({"name": name, "success": False,
+                                                 "error": f"process exited with code {returncode}"}))
+                return
             self.bus.emit(message.response({"name": name, "success": True}))
         except Exception as exc:
             LOG.exception(f"[app-launcher] failed to launch '{cmd}'")
@@ -306,17 +325,27 @@ class AppLauncherPHALPlugin(PHALPlugin):
         """Close a running application by spoken name.
 
         Request payload: ``{"name": "firefox"}``
+
+        Every request must yield exactly one ``.response`` - processes can
+        exit between being enumerated and being inspected, so any psutil
+        race is caught here and reported as an error rather than left to
+        propagate and drop the response.
         """
-        name: str = message.data.get("name", "")
-        if not name:
-            self.bus.emit(message.response({"name": name, "error": "Missing 'name' field"}))
+        name = message.data.get("name", "")
+        if not isinstance(name, str) or not name.strip():
+            self.bus.emit(message.response({"name": name, "error": "invalid or missing name"}))
             return
 
-        success = False
-        if self._wmctrl and not self._cfg("disable_window_manager", False):
-            success = self._close_by_window(name)
-        if not success:
-            success = self._close_by_process(name)
+        try:
+            success = False
+            if self._wmctrl and not self._cfg("disable_window_manager", False):
+                success = self._close_by_window(name)
+            if not success:
+                success = self._close_by_process(name)
+        except psutil.Error as exc:
+            LOG.exception(f"[app-launcher] error closing '{name}'")
+            self.bus.emit(message.response({"name": name, "error": str(exc)}))
+            return
 
         if success:
             self.bus.emit(message.response({"name": name, "success": True}))
@@ -328,9 +357,21 @@ class AppLauncherPHALPlugin(PHALPlugin):
 
         Request payload: ``{"name": "firefox"}``
         Response payload: ``{"name": "firefox", "running": true}``
+
+        Every request must yield exactly one ``.response`` - see the note in
+        ``handle_close`` about psutil races.
         """
-        name: str = message.data.get("name", "")
-        running = self._is_running(name) if name else False
+        name = message.data.get("name", "")
+        if not isinstance(name, str) or not name.strip():
+            self.bus.emit(message.response({"name": name, "running": False,
+                                             "error": "invalid or missing name"}))
+            return
+        try:
+            running = self._is_running(name)
+        except psutil.Error as exc:
+            LOG.exception(f"[app-launcher] error checking is_running for '{name}'")
+            self.bus.emit(message.response({"name": name, "error": str(exc)}))
+            return
         self.bus.emit(message.response({"name": name, "running": running}))
 
     # ------------------------------------------------------------------
@@ -338,18 +379,29 @@ class AppLauncherPHALPlugin(PHALPlugin):
     # ------------------------------------------------------------------
 
     def _match_process(self, app: str) -> Iterable[psutil.Process]:
-        cmd, _ = match_one(app.title(), self.applist)
+        cmd, score = match_one(app.title(), self.applist)
+        if score < self._thresh:
+            return
         cmd_base = cmd.split(" ")[0].split("/")[-1]
         processes = sorted(
             psutil.process_iter(["pid", "name", "create_time"]),
-            key=lambda p: p.info["create_time"],
+            key=lambda p: p.info.get("create_time") or 0,
             reverse=True,
         )
         for proc in processes:
-            if proc.status() == "zombie":
+            try:
+                if proc.status() == "zombie":
+                    continue
+                if fuzzy_match(cmd_base, proc.info["name"]) > 0.9:
+                    yield proc
+            except psutil.Error:
+                # process_iter() snapshots PIDs; a process can exit between
+                # the snapshot and this access, raising NoSuchProcess (or
+                # AccessDenied). Skip it rather than let the error escape
+                # and drop the caller's bus response. Skipped processes may
+                # under-report running state for other-user apps -
+                # answering possibly-wrong beats dropping the response.
                 continue
-            if fuzzy_match(cmd_base, proc.info["name"]) > 0.9:
-                yield proc
 
     def _close_by_process(self, app: str) -> bool:
         terminated = []
@@ -378,7 +430,7 @@ class AppLauncherPHALPlugin(PHALPlugin):
     def _get_window_process_mapping(self) -> List[WindowMatch]:
         windows = []
         try:
-            result = subprocess.run([self._wmctrl, "-lp"], capture_output=True, text=True)
+            result = subprocess.run([self._wmctrl, "-lp"], capture_output=True, text=True, timeout=3)
             if result.returncode != 0:
                 return []
             for line in result.stdout.splitlines():
@@ -413,14 +465,18 @@ class AppLauncherPHALPlugin(PHALPlugin):
         candidates = self._match_window(app)
         if not candidates:
             return False
+        closed = False
         for win in candidates:
             try:
-                subprocess.run([self._wmctrl, "-ic", win[0]])
+                subprocess.run([self._wmctrl, "-ic", win[0]], timeout=3)
+                closed = True
+            except subprocess.TimeoutExpired:
+                LOG.warning(f"[app-launcher] wmctrl close timed out for window {win[0]}")
             except Exception:
                 pass
             if not self._cfg("terminate_all", False):
                 break
-        return True
+        return closed
 
     # ------------------------------------------------------------------
     # Lifecycle

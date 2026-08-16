@@ -66,10 +66,22 @@ class TestLaunchHandler(unittest.TestCase):
         responses = []
         bus.on("ovos.phal.app_launcher.launch.response", responses.append)
         with patch("subprocess.Popen") as mock_popen:
+            mock_popen.return_value.poll.return_value = None  # still running
             plugin.handle_launch(Message("ovos.phal.app_launcher.launch", {"name": "Firefox"}))
         mock_popen.assert_called_once()
         self.assertTrue(responses[0].data["success"])
         self.assertEqual(responses[0].data["name"], "Firefox")
+
+    def test_launch_immediate_nonzero_exit_is_not_success(self):
+        plugin, bus = _make_plugin()
+        plugin._applist = {"Firefox": "firefox"}
+        responses = []
+        bus.on("ovos.phal.app_launcher.launch.response", responses.append)
+        with patch("subprocess.Popen") as mock_popen:
+            mock_popen.return_value.poll.return_value = 1  # already exited, error
+            plugin.handle_launch(Message("ovos.phal.app_launcher.launch", {"name": "Firefox"}))
+        self.assertFalse(responses[0].data.get("success", False))
+        self.assertIn("error", responses[0].data)
 
     def test_launch_no_match(self):
         plugin, bus = _make_plugin({"match_threshold": 0.99})
@@ -167,7 +179,8 @@ class TestListLaunchRoundTrip(unittest.TestCase):
         names = [a["name"] for a in list_responses[0].data["apps"]]
         self.assertTrue(len(names) > 0)
 
-        with patch("subprocess.Popen"):
+        with patch("subprocess.Popen") as mock_popen:
+            mock_popen.return_value.poll.return_value = None  # still running
             plugin.handle_launch(Message("ovos.phal.app_launcher.launch", {"name": names[0]}))
 
         self.assertTrue(launch_responses[0].data.get("success"))
