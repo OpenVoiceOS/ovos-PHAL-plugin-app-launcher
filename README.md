@@ -53,6 +53,23 @@ Each request and response pair uses the standard `message.response()` convention
 
 ---
 
+## Matching
+
+`launch`, `close`, and `is_running` resolve the spoken `name` against the built application
+list (and, for `close`/`is_running`, against open window titles) with a fuzzy match. A name
+that scores below `match_threshold` is reported back as not found (`{name, error: "No
+application matched '...'"}` for `launch`, or excluded from window candidates for `close`)
+rather than being fuzzy-matched to some other, unrelated application.
+
+## Response and timeout guarantees
+
+Every request gets exactly one response. When process enumeration fails mid-scan
+(a process exits while the plugin is looking at it, or access is denied), the
+handler answers with `{name, error: str}` instead of staying silent, so a
+`wait_for_response` caller never hangs on a race. Calls to `wmctrl` (window
+listing and window close) time out after 3 seconds; a hung window manager makes
+`close` fall back to the process-based path rather than blocking the handler.
+
 ## Configuration
 
 Add to `ovos.conf` under the `PHAL` section or plugin settings:
