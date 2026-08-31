@@ -1,8 +1,8 @@
 # Changelog
 
-## [0.0.1a3](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/tree/0.0.1a3) (2026-08-31)
+## [0.0.1a4](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/tree/0.0.1a4) (2026-08-31)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/compare/0.0.0...0.0.1a3)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/compare/0.0.0...0.0.1a4)
 
 **Merged pull requests:**
 
