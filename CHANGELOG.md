@@ -1,11 +1,12 @@
 # Changelog
 
-## [0.0.0](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/tree/0.0.0) (2026-07-31)
+## [0.0.0](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/tree/0.0.0) (2026-08-31)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/compare/0.0.0...0.0.0)
 
 **Merged pull requests:**
 
+- fix: never drop a bus response under psutil races [\#7](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/pull/7) ([JarbasAl](https://github.com/JarbasAl))
 - docs: rewrite README in Simplified Technical English [\#6](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/pull/6) ([JarbasAl](https://github.com/JarbasAl))
 - chore: add missing shared CI workflows [\#5](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/pull/5) ([JarbasAl](https://github.com/JarbasAl))
 - docs: standardize NGI0 Commons Fund attribution [\#4](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/pull/4) ([JarbasAl](https://github.com/JarbasAl))
