@@ -1,11 +1,13 @@
 # Changelog
 
-## [0.0.0](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/tree/0.0.0) (2026-08-31)
+## [0.0.1a3](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/tree/0.0.1a3) (2026-08-31)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/compare/0.0.0...0.0.0)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/compare/0.0.0...0.0.1a3)
 
 **Merged pull requests:**
 
+- fix: repair duplicated version block so alpha publishing resumes [\#9](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/pull/9) ([JarbasAl](https://github.com/JarbasAl))
+- docs: describe response and timeout guarantees [\#8](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/pull/8) ([JarbasAl](https://github.com/JarbasAl))
 - fix: never drop a bus response under psutil races [\#7](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/pull/7) ([JarbasAl](https://github.com/JarbasAl))
 - docs: rewrite README in Simplified Technical English [\#6](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/pull/6) ([JarbasAl](https://github.com/JarbasAl))
 - chore: add missing shared CI workflows [\#5](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-app-launcher/pull/5) ([JarbasAl](https://github.com/JarbasAl))
